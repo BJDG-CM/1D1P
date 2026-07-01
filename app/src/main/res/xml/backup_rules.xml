@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- allowBackup is false, but these files are declared explicitly so nothing sensitive is
+     ever included even if backup is toggled. The encrypted prefs are excluded. -->
+<full-backup-content>
+    <exclude domain="sharedpref" path="onepass_secure_prefs.xml" />
+</full-backup-content>

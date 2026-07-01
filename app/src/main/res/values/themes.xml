@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Base theme; actual colors are driven by Compose Material3. This keeps the splash/system
+         window consistent before Compose takes over. -->
+    <style name="Theme.OneDayOnePass" parent="android:Theme.Material.Light.NoActionBar" />
+</resources>
