@@ -36,31 +36,58 @@ class SecureStore private constructor(private val prefs: SharedPreferences) {
         return hasher.verify(candidate, salt, hash)
     }
 
-    // ---- Daily code ----
+    // ---- Settings ----
+
+    /** When false, the 9 AM alarm still generates/stores the code but posts no notification. */
+    var notificationsEnabled: Boolean
+        get() = prefs.getBoolean(KEY_NOTIF_ENABLED, true)
+        set(value) { prefs.edit().putBoolean(KEY_NOTIF_ENABLED, value).apply() }
+
+    /** When true, the code screen shows a manual "trigger now" test button. */
+    var testButtonEnabled: Boolean
+        get() = prefs.getBoolean(KEY_TEST_ENABLED, false)
+        set(value) { prefs.edit().putBoolean(KEY_TEST_ENABLED, value).apply() }
+
+    // ---- Daily code (kept as a per-date history) ----
+
+    /** One day's generated code. */
+    data class CodeEntry(val date: LocalDate, val code: String)
 
     /** The code for [today], or null if none has been generated for today yet. */
-    fun codeForToday(today: LocalDate = LocalDate.now()): String? {
-        val storedDate = prefs.getString(KEY_CODE_DATE, null) ?: return null
-        if (storedDate != today.toString()) return null
-        return prefs.getString(KEY_CODE_VALUE, null)
-    }
+    fun codeForToday(today: LocalDate = LocalDate.now()): String? =
+        prefs.getString(codeKey(today), null)
 
-    /** Persists [code] as belonging to [date]. Stored inside the encrypted prefs. */
+    /** Persists [code] under [date]. Each day is stored separately so past days are retained. */
     fun saveCode(code: String, date: LocalDate = LocalDate.now()) {
         require(code.length == CodeGenerator.LENGTH)
         prefs.edit()
-            .putString(KEY_CODE_DATE, date.toString())
-            .putString(KEY_CODE_VALUE, code)
+            .putString(codeKey(date), code)
             .apply()
     }
+
+    /**
+     * All stored codes, newest day first. Reads every `code_yyyy-MM-dd` entry from the encrypted
+     * prefs so the user can review previous days.
+     */
+    fun history(): List<CodeEntry> =
+        prefs.all.mapNotNull { (key, value) ->
+            if (value !is String) return@mapNotNull null
+            val dateText = key.removePrefix(KEY_CODE_PREFIX)
+            if (dateText == key) return@mapNotNull null // key had no prefix
+            val date = runCatching { LocalDate.parse(dateText) }.getOrNull() ?: return@mapNotNull null
+            CodeEntry(date, value)
+        }.sortedByDescending { it.date }
+
+    private fun codeKey(date: LocalDate): String = KEY_CODE_PREFIX + date
 
     companion object {
         private const val FILE_NAME = "onepass_secure_prefs"
 
         private const val KEY_PW_SALT = "pw_salt"
         private const val KEY_PW_HASH = "pw_hash"
-        private const val KEY_CODE_DATE = "code_date"
-        private const val KEY_CODE_VALUE = "code_value"
+        private const val KEY_CODE_PREFIX = "code_"
+        private const val KEY_NOTIF_ENABLED = "settings_notif_enabled"
+        private const val KEY_TEST_ENABLED = "settings_test_enabled"
 
         @Volatile
         private var instance: SecureStore? = null

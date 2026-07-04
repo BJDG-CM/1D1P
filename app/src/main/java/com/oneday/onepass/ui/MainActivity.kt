@@ -20,12 +20,13 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.oneday.onepass.alarm.AlarmScheduler
 import com.oneday.onepass.ui.screens.ChangePasswordScreen
 import com.oneday.onepass.ui.screens.CodeScreen
+import com.oneday.onepass.ui.screens.HistoryScreen
 import com.oneday.onepass.ui.screens.LockScreen
 import com.oneday.onepass.ui.screens.OnboardingScreen
 import com.oneday.onepass.ui.screens.SettingsScreen
 import com.oneday.onepass.ui.theme.OneDayOnePassTheme
 
-private enum class Screen { ONBOARDING, LOCK, CODE, SETTINGS, CHANGE_PW }
+private enum class Screen { ONBOARDING, LOCK, CODE, HISTORY, SETTINGS, CHANGE_PW }
 
 class MainActivity : ComponentActivity() {
 
@@ -65,9 +66,16 @@ class MainActivity : ComponentActivity() {
             Screen.CODE -> CodeScreen(
                 vm = vm,
                 onOpenSettings = { screen = Screen.SETTINGS },
+                onOpenHistory = { screen = Screen.HISTORY },
+            )
+
+            Screen.HISTORY -> HistoryScreen(
+                vm = vm,
+                onBack = { screen = Screen.CODE },
             )
 
             Screen.SETTINGS -> SettingsScreen(
+                vm = vm,
                 system = system,
                 onBack = { screen = Screen.CODE },
                 onChangePassword = { screen = Screen.CHANGE_PW },

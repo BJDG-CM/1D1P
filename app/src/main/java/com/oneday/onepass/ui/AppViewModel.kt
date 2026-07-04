@@ -1,7 +1,11 @@
 package com.oneday.onepass.ui
 
 import android.app.Application
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
+import com.oneday.onepass.alarm.DailyCodeWorker
 import com.oneday.onepass.core.PasswordHasher
 import com.oneday.onepass.data.SecureStore
 import java.time.LocalDate
@@ -16,6 +20,30 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     private val hasher = PasswordHasher()
 
     val hasPassword: Boolean get() = store.hasPassword
+
+    // ---- Settings (Compose-observable) ----
+
+    var notificationsEnabled by mutableStateOf(store.notificationsEnabled)
+        private set
+
+    var testButtonEnabled by mutableStateOf(store.testButtonEnabled)
+        private set
+
+    fun updateNotificationsEnabled(enabled: Boolean) {
+        store.notificationsEnabled = enabled
+        notificationsEnabled = enabled
+    }
+
+    fun updateTestButtonEnabled(enabled: Boolean) {
+        store.testButtonEnabled = enabled
+        testButtonEnabled = enabled
+    }
+
+    /**
+     * Simulates the 9 AM trigger right now: generates and stores a code and (if notifications are
+     * enabled) posts the notification. Returns the code so the UI can refresh.
+     */
+    fun runTestTrigger(): String = DailyCodeWorker.run(getApplication(), reschedule = false)
 
     /** Creates the initial password. Caller must have validated the format. */
     fun setInitialPassword(password: String): Boolean {
@@ -37,4 +65,7 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
 
     /** Today's code, or null if it hasn't been generated yet (e.g. before 9 AM). */
     fun todayCode(): String? = store.codeForToday(LocalDate.now())
+
+    /** Every past day's code, newest first, for the history screen. */
+    fun history(): List<SecureStore.CodeEntry> = store.history()
 }

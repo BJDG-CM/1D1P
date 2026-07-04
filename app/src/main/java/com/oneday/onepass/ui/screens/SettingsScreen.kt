@@ -19,6 +19,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
@@ -33,11 +34,13 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import com.oneday.onepass.R
+import com.oneday.onepass.ui.AppViewModel
 import com.oneday.onepass.ui.SystemAccess
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
+    vm: AppViewModel,
     system: SystemAccess,
     onBack: () -> Unit,
     onChangePassword: () -> Unit,
@@ -77,6 +80,20 @@ fun SettingsScreen(
                 Text(stringResource(R.string.settings_change_pw))
             }
 
+            ToggleCard(
+                title = stringResource(R.string.settings_notif_toggle),
+                subtitle = stringResource(R.string.settings_notif_toggle_desc),
+                checked = vm.notificationsEnabled,
+                onCheckedChange = { vm.updateNotificationsEnabled(it) },
+            )
+
+            ToggleCard(
+                title = stringResource(R.string.settings_test_toggle),
+                subtitle = stringResource(R.string.settings_test_toggle_desc),
+                checked = vm.testButtonEnabled,
+                onCheckedChange = { vm.updateTestButtonEnabled(it) },
+            )
+
             PermissionCard(
                 label = stringResource(R.string.settings_notif_status),
                 granted = notifEnabled,
@@ -90,6 +107,34 @@ fun SettingsScreen(
                 actionLabel = stringResource(R.string.settings_open_exact),
                 onAction = system.openExactAlarmSettings,
             )
+        }
+    }
+}
+
+@Composable
+private fun ToggleCard(
+    title: String,
+    subtitle: String,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+) {
+    Card(modifier = Modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(title, style = MaterialTheme.typography.titleMedium)
+                Text(
+                    text = subtitle,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            Spacer(Modifier.height(0.dp))
+            Switch(checked = checked, onCheckedChange = onCheckedChange)
         }
     }
 }
